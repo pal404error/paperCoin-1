@@ -1,0 +1,21 @@
+.parent
+{
+    width: 100%;
+}
+
+.button
+{
+    text-align: center;
+}
+
+.row
+{
+    text-align: center;
+    display: flex;
+}
+
+.button1
+{
+    max-width: 100%;
+    flex: 1;
+}
