@@ -4,7 +4,8 @@ import { Route, Routes, useRoutes } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
 import Home from './components/home';
 import LogIn from './components/login';
-
+import Eth from './components/eth';
+import History from './components/history';
 function App() {
 
   return (
@@ -13,6 +14,8 @@ function App() {
     <Routes>
       <Route path="/" element={<LogIn/>} />
       <Route path="/home" element={<Home/>}/>
+      <Route path="/home/eth" element={<Eth/>}/>
+      <Route path="/history" element={<History/>}/>
     </Routes>
     </BrowserRouter>
    </>

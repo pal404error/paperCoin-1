@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import TradingViewWidget from './TradingViewWidget'; 
+
 import logo from './logo.svg';
 import { Route, Routes, useRoutes } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
@@ -7,7 +7,7 @@ import "./home.css";
 import Positions from './positionTemplate';
 
 
-function Home(){
+function History(){
     const [isPopupOpen, setPopupOpen] = useState(false);
     const [orderType, setOrderType] = useState(null);
     const popupRef = useRef(null);
@@ -19,10 +19,12 @@ function Home(){
     const [btcusdt, setBtcusdt] = useState();
     const [marketOrders, setMarketOrders] = useState([]);
     const [marginUsed, setMarginUsed] = useState(0);
-  
+    const [limitOrders, SetLimitOrder] = useState();
+    const [exelimitOrders, ExeSetLimitOrder] = useState();
+
     useEffect(() => {
       // Create a new WebSocket instance
-      const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade'); // Change the URL to match your WebSocket server
+      const socket = new WebSocket('wss://stream.binance.com:9443/ws/ethusdt@trade'); // Change the URL to match your WebSocket server
   
       // Event listener for WebSocket connection open
       socket.onopen = () => {
@@ -32,7 +34,7 @@ function Home(){
       // Event listener for WebSocket incoming messages
       socket.onmessage = (event) => {
         setBtcusdt(JSON.parse(event.data));
-        // console.log(event.data);
+        console.log(event.data);
 
       };
 
@@ -105,7 +107,7 @@ function Home(){
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }, [popupRef]);
-  
+    
     useEffect(() => {
       fetch('https://5a5c-74-225-176-246.ngrok-free.app/getOrders', {
               method: 'POST',
@@ -133,6 +135,37 @@ function Home(){
                   console.error('Fetch error:', error);
                   });
     },[]);
+
+
+
+    useEffect(() => {
+        fetch('https://5a5c-74-225-176-246.ngrok-free.app/getOrders', {
+                method: 'POST',
+                body: JSON.stringify({}),
+                headers: new Headers({
+                  Accept: 'application/json',
+                  'Content-Type': 'multipart/form-data'
+                  }),
+                    })
+                    .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                    })
+                    .then(data => {
+                      var tempMarket = [];
+                      for(let key in data["limit"])
+                      {
+                        tempMarket.push(data["limit"][key]);
+                      }
+                      SetLimitOrder(tempMarket);
+                    })
+                    .catch(error => {
+                    console.error('Fetch error:', error);
+                    });
+      },[]);
+
   
     function hideshowdiv(val) {
       if (val === 1) {
@@ -148,25 +181,13 @@ function Home(){
     }
   
     const handlestopLoss = (e) => {
+
       setStopLoss(e.target.value);
     }
   
     const handleTakeProfit = (e) => {
       setTakeProfit(e.target.value);
     }
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const response = await fetch('https://5a5c-74-225-176-246.ngrok-free.app/hello');
-          const data = await response.text();
-          console.log(data);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        }
-      };
-  
-      fetchData();
-    }, []);
   
     const handlePrice = (e) => {
       setEntryPrice(e.target.value);
@@ -203,7 +224,7 @@ function Home(){
       {
         order = 
         {
-          "symbol" : "BTCUSDT",
+          "symbol" : "ETHUSDT",
           "marketOrLimit" : marketOrLimit,
           "orderType": orderType,
           "entry_price": btcusdt["p"],
@@ -215,7 +236,7 @@ function Home(){
       {
         order = 
         {
-          "symbol" : "BTCUSDT",
+          "symbol" : "ETHUSDT",
           "marketOrLimit" : marketOrLimit,
           "orderType": orderType,
           "entry_price": entryPrice,
@@ -224,7 +245,7 @@ function Home(){
         };
       }
       console.log("Order place")
-      fetch('https://5a5c-74-225-176-246.ngrok-free.app/getOrder', {
+      fetch('https://5a5c-74-225-176-246.ngrok-free.app/newOrder', {
               method: 'POST',
               body: JSON.stringify(order),
               headers: {
@@ -248,7 +269,7 @@ function Home(){
 
     return (
       <>
-      
+{/*       
         <div id="parent">
           <div className="container1">
             <button className="settings-button">
@@ -297,20 +318,17 @@ function Home(){
                 </div>
               </div>
               <button type="button" className="button2" onClick={handleOrder}>{orderType ? `${orderType} Order` : 'Order'}</button>
-            </div>
+            </div> */}
             {btcusdt && marketOrders.map((ord, index) => (
               <>
                 <Positions orders={ord} currentPrice={btcusdt["p"]}/>
               </>
             ))}
-          </div>
-          <div className="container2">
-            <TradingViewWidget  />
-          </div>
+          {/* </div>
         </div>
-  
+   */}
       </>
     );
 }
 
-export default Home;
+export default History;
