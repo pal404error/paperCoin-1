@@ -149,7 +149,7 @@ app.post('/updateOrder', (req, res) => {
   get(child(starCountRef, "jayur/orders/market/"+req.body.key)).then((snap) => {
     if (snap.exists()) {
       update(ref(db, "jayur/orders/market/" + req.body.key),
-        { "orderType": "sell" }).catch((error) => {
+        { "orderType": "close" }).catch((error) => {
           // console.log("insideee____")
           if (error == null) { console.log("Fine"); }
           else { console.error("Error", error); }

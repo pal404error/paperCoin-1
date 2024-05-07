@@ -23,6 +23,9 @@ function Eth() {
     const [limitOrders, SetLimitOrder] = useState([]);
     const [exelimitOrders, ExeSetLimitOrder] = useState();
 
+
+
+    let url = "https://3b76-74-225-173-253.ngrok-free.app"
     useEffect(() => {
         // Create a new WebSocket instance
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/ethusdt@trade'); // Change the URL to match your WebSocket server
@@ -51,11 +54,11 @@ function Eth() {
             }
         };
     }, []);
-
     useEffect(() => {
+
+    let margin=0;
+    let livepnl=0;
         if (btcusdt !== null) {
-            let margin = 0;
-            let livepnl = 0;
             for (let i = 0; i < marketOrders.length; i++) {
                 margin += parseFloat(marketOrders[i]["entry_price"]);
 
@@ -89,9 +92,9 @@ function Eth() {
             document.getElementById("currentPNL").style.color = "red";
         }
 
-        document.getElementById("currentPNL").innerHTML = livepnl.toFixed(2);
-        document.getElementById("margin").innerHTML = 1000000 - margin.toFixed(2);
-        document.getElementById("balance").innerHTML = 1000000 - livepnl.toFixed(2);
+        document.getElementById("currentPNL").innerHTML = livepnl?.toFixed(2);
+        document.getElementById("margin").innerHTML = 1000000 - margin?.toFixed(2);
+        document.getElementById("balance").innerHTML = 1000000 - livepnl?.toFixed(2);
 }
 }, [btcusdt]);
 
@@ -104,7 +107,7 @@ function Eth() {
             // console.log(limitOrders);
             for (let i = 0; i < limitOrders.length; i++) {
                 // console.log("NOT WORKING ");
-                if (limitOrders[i]["entry_price"] <= btcusdt["p"]) {
+                if (limitOrders[i]["entry_price"] == btcusdt["p"]) {
                     if (limitOrders[i]["orderType"] == "buy") {
                         let bod = limitOrders[i];
                         console.log(bod);
@@ -132,11 +135,15 @@ function Eth() {
             // console.log(limitOrders);
             for (let i = 0; i < marketOrders.length; i++) {
                 // console.log("NOT WORKING ");
-                if (marketOrders[i]["stop_loss"] <= btcusdt["p"]) {
+                if (btcusdt["p"] <= marketOrders[i]["stop_loss"] ) {
                     if (marketOrders[i]["orderType"] == "buy") {
                         let bod = marketOrders[i];
                         console.log(bod);
                         handleStopLoss(bod);
+                        let livepnl = livepnl+parseFloat(marketOrders[i]["entry_price"]) - parseFloat(marketOrders[i]["stop_loss"]);
+                        document.getElementById("currentPNL").innerHTML = livepnl;
+                        document.getElementById("balance").innerHTML = 1000000 - livepnl;
+                        window.alert("StopLoss is triggered: \n"+ bod);
                         window.location.reload();
                     }                     
                 }
@@ -159,7 +166,7 @@ function Eth() {
             };
         
         console.log("***** StopLoss *** Order place")
-        fetch('https://a8c3-98-70-106-57.ngrok-free.app/updateOrder', {
+        fetch(url+'/updateOrder', {
             method: 'POST',
             body: JSON.stringify(order),
             headers: {
@@ -181,6 +188,67 @@ function Eth() {
 
     }
 
+// Take profit logic
+ useEffect(() => {
+    if (btcusdt !== null) {
+        // console.log(limitOrders);
+        for (let i = 0; i < marketOrders.length; i++) {
+            // console.log("NOT WORKING ");
+            if (btcusdt["p"] >= marketOrders[i]["take_profit"] &&  marketOrders[i]["take_profit"] != "") {
+                if (marketOrders[i]["orderType"] == "buy") {
+                    let bod = marketOrders[i];
+                    console.log(bod);
+                    handleTake_Profit(bod);
+                    window.location.reload();
+                }                     
+            }
+
+        }
+    }
+}, [btcusdt]);
+
+
+function handleTake_Profit(key){
+    let order =
+        {
+            "symbol": "ETHUSDT",
+            "marketOrLimit": key.marketOrLimit,
+            "orderType": key.orderType,
+            "entry_price": key.entry_price,
+            "key":key.key,
+            "stop_loss": key.stop_loss,
+            "take_profit": key.take_profit,
+        };
+    
+    console.log("***** Take Profit *** Order place")
+    fetch(url+'/updateOrder', {
+        method: 'POST',
+        body: JSON.stringify(order),
+        headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+        },
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+        });
+
+
+}
+
+
+
+
+
+
+
     function handleLimit(key){
         let order =
             {
@@ -194,7 +262,7 @@ function Eth() {
             };
         
         console.log("***** LIMIT Order place")
-        fetch('https://a8c3-98-70-106-57.ngrok-free.app/delOrder', {
+        fetch(url+'/delOrder', {
             method: 'POST',
             body: JSON.stringify(order),
             headers: {
@@ -239,7 +307,7 @@ function Eth() {
     }, [popupRef]);
 
     useEffect(() => {
-        fetch('https://a8c3-98-70-106-57.ngrok-free.app/getOrders', {
+        fetch(url+'/getOrders', {
             method: 'POST',
             body: JSON.stringify({}),
             headers: new Headers({
@@ -269,7 +337,7 @@ function Eth() {
 
     useEffect(() => {
         // #TODO: NGROK
-        fetch('https://a8c3-98-70-106-57.ngrok-free.app/getOrders', {
+        fetch(url+'/getOrders', {
             method: 'POST',
             body: JSON.stringify({}),
             headers: new Headers({
@@ -379,7 +447,7 @@ function Eth() {
         console.log("Order place")
 
         // #TODO: NGROK
-        fetch('https://a8c3-98-70-106-57.ngrok-free.app/newOrder', {
+        fetch(url+'/newOrder', {
             method: 'POST',
             body: JSON.stringify(order),
             headers: {
@@ -455,18 +523,33 @@ function Eth() {
                     </div>
 
 
+                    {btcusdt && marketOrders.map((ord, index) => {
+                        if (ord[orderType] != "buy") {
+                            // console.log(ord);
+                            return (
+                                <>
+                                    <Positions orders={ord} currentPrice={btcusdt["p"]} />
+                                </>
+                            );
+                        } else {
+                            return null; // or any other JSX component if needed
+                        }
+                    })}
 
-                    {btcusdt && limitOrders.map((ord, index) => (
-                        <>
-                            <Positions orders={ord} currentPrice={btcusdt["p"]} />
-                        </>
-                    ))}
 
-                    {btcusdt && marketOrders.map((ord, index) => (
-                        <>
-                            <Positions orders={ord} currentPrice={btcusdt["p"]} />
-                        </>
-                    ))}
+                    {btcusdt && limitOrders.map((ord, index) => {
+                        if (ord[orderType] != "close") {
+                            // console.log(ord);
+                            return (
+                                <>
+                                    <Positions orders={ord} currentPrice={btcusdt["p"]} />
+                                </>
+                            );
+                        } else {
+                            return null; // or any other JSX component if needed
+                        }
+                    })}
+
 
                 </div>
                 <div className="container2">
